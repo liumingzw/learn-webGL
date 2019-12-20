@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div style="background-color: #e0e0e0; width: 500px; height: 500px">
+    <canvas id="canvas" width="400" height="400">
+
+    </canvas>
+</div>
+
+<script type='x-shader/x-vertex' id='vertexshader'>
+    void main() {
+      gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+      gl_PointSize = 10.0;
+    }
+</script>
+
+<script type='x-shader/x-fragment' id='fragmentshader'>
+    precision mediump float;
+    void main() {
+     float d = distance(gl_PointCoord, vec2(0.5, 0.5));
+     if(d < 0.3){
+       gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+     }else if(d < 0.5){
+       gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+     }else {
+       discard;
+     }
+    }
+</script>
+
+<script>
+    window.onload = draw3D();
+
+    function draw3D() {
+        const canvas = document.getElementById('canvas');
+        const gl = canvas.getContext("webgl");
+        // gl.viewport(0, 0, 400, 400)
+        const vShaderCode = document.getElementById('vertexshader').textContent;
+        const fShaderCode = document.getElementById('fragmentshader').textContent;
+
+        setupShader(gl, vShaderCode, fShaderCode);
+
+        gl.clearColor(0.0, 0.5, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.drawArrays(gl.POINTS, 0, 1);
+    }
+
+    function setupShader(gl, vShaderCode, fShaderCode) {
+        const program = gl.createProgram();
+
+        const vShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vShader, vShaderCode);
+        gl.compileShader(vShader);
+        gl.attachShader(program, vShader);
+
+        const fShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fShader, fShaderCode);
+        gl.compileShader(fShader);
+        gl.attachShader(program, fShader);
+
+        gl.linkProgram(program);
+        gl.useProgram(program);
+    }
+</script>
+</body>
+</html>

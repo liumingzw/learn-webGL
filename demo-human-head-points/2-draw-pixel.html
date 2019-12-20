@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div style="background-color: #e0e0e0; width: 500px; height: 500px">
+    <canvas id="canvas" width="400" height="400">
+
+    </canvas>
+</div>
+
+<script type='x-shader/x-vertex' id='vertexshader'>
+    void main() {
+      gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+      gl_PointSize = 10.0;
+    }
+</script>
+
+<script type='x-shader/x-fragment' id='fragmentshader'>
+    void main() {
+     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+</script>
+
+<script>
+    window.onload = draw3D();
+
+    function draw3D() {
+        const canvas = document.getElementById('canvas');
+        const gl = canvas.getContext("webgl");
+        // gl.viewport(0, 0, 400, 400)
+        const vShaderCode = document.getElementById('vertexshader').textContent;
+        const fShaderCode = document.getElementById('fragmentshader').textContent;
+
+        setupShader(gl, vShaderCode, fShaderCode);
+
+        gl.clearColor(0.0, 0.5, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.drawArrays(gl.POINTS, 0, 1);
+    }
+
+    // https://sanonz.github.io/2017/webgl-draw-rectangle-and-point/
+    /**
+     * https://developer.mozilla.org/zh-CN/docs/Web/API/WebGLShader
+     *
+     * 要创建一个 WebGLShader 需要使用 WebGLRenderingContext.createShader，
+     * 通过 WebGLRenderingContext.shaderSource() 然后挂接GLSL源代码 ,
+     * 最后调用 WebGLRenderingContext.compileShader() 完成着色器（shader）的编译。
+     * 此时 WebGLShader 仍不是可用的形式，他需要被添加到一个 WebGLProgram里.
+     * @param gl
+     * @param vShaderCode
+     * @param fShaderCode
+     */
+    function setupShader(gl, vShaderCode, fShaderCode) {
+        const program = gl.createProgram();
+
+        // 创建一个 WebGLShader 着色器对象
+        const vShader = gl.createShader(gl.VERTEX_SHADER);
+        // 挂接 GLSL 源代码到 shader 上
+        gl.shaderSource(vShader, vShaderCode);
+        // 编译一个 GLSL 着色器，使其成为为二进制数据，然后就可以被 WebGLProgram 对象所使用
+        gl.compileShader(vShader);
+        // 把着色器 shader 添加到 program
+        gl.attachShader(program, vShader);
+
+        const fShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fShader, fShaderCode);
+        gl.compileShader(fShader);
+        gl.attachShader(program, fShader);
+
+        // 分别链接和使用 WebGLProgram 对象
+        gl.linkProgram(program);
+        gl.useProgram(program);
+    }
+</script>
+</body>
+</html>
