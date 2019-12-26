@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<script src="./cuon-matrix.js"></script>
+
+<div style="background-color: #e0e0e0; width: 500px; height: 500px">
+    <canvas id="canvas" width="400" height="400">
+
+    </canvas>
+</div>
+
+<script type='x-shader/x-vertex' id='vertexshader'>
+    uniform mat4 u_xformMatrix;
+    attribute vec4 a_Position;
+    void main() {
+      gl_Position = u_xformMatrix * a_Position;
+    }
+</script>
+
+<script type='x-shader/x-fragment' id='fragmentshader'>
+    void main() {
+     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+</script>
+
+<script>
+    window.onload = parseData();
+
+    function parseData() {
+        fetch('./3d_head.json')
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(myJson) {
+                draw3D(myJson)
+            });
+    }
+
+    // 见 P79，有详细的图
+    function draw3D(jsonData) {
+        const arr = [];
+        for(let key in jsonData){
+            arr.push(jsonData[key]/10)
+            // console.log(key + '---' + myJson[key])
+        }
+
+
+        const canvas = document.getElementById('canvas');
+        const gl = canvas.getContext("webgl");
+        // gl.viewport(0, 0, 400, 400)
+        const vShaderCode = document.getElementById('vertexshader').textContent;
+        const fShaderCode = document.getElementById('fragmentshader').textContent;
+
+        setupShader(gl, vShaderCode, fShaderCode);
+
+        const count = arr.length / 3;
+        console.log("count: " + count)
+        const vertices = new Float32Array(arr);
+
+        // 创建缓冲区对象，就是一块内存
+        const vertexBuffer = gl.createBuffer();
+
+        // 将缓冲区绑定到目标： ARRAY_BUFFER
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+
+        // 向缓冲区写入数据
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+        const a_Position = gl.getAttribLocation(gl.program, "a_Position");
+
+
+        let ANGLE = 40;
+        setInterval(
+            ()=> {
+                // const radian = Math.PI * (angle) / 180;
+                // const cosB = Math.cos(radian);
+                // const sinB = Math.sin(radian);
+
+
+                // Create Matrix4 object for the rotation matrix
+                var xformMatrix = new Matrix4();
+
+                // Set the rotation matrix
+                xformMatrix.rotate(ANGLE, 0, 1, 0);
+
+
+                // const matrix = new Float32Array([
+                //     cosB, sinB, 0.0, 0.0,
+                //     -sinB, cosB, 0.0, 0.0,
+                //     0.0, 0.0, 1.0, 0.0,
+                //     0.0, 0.0, 0.0, 1.0,
+                // ]);
+
+                const u_xformMatrix = gl.getUniformLocation(gl.program, "u_xformMatrix");
+                gl.uniformMatrix4fv(u_xformMatrix, false, xformMatrix.elements);
+
+                const u_Translation = gl.getUniformLocation(gl.program, "u_Translation");
+                gl.uniform4f(u_Translation, Math.random(), 0.1, 0.1, 0);
+
+                // 将缓冲区对象(的指针)分配给变量 a_Position，API：P76
+                gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, true, 0, 0);
+
+                // 将缓冲区对象（a_Position 是缓冲区对象的指针，其实等同于）和 attribute 连接起来
+                // 缓冲区中的每个点，都要依次赋值给 a_Position，供 v shader 运算
+                gl.enableVertexAttribArray(a_Position);
+
+                gl.clearColor(0.0, 0.5, 0.0, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                gl.drawArrays(gl.POINTS, 0, count);
+            },
+            100
+        )
+    }
+
+    function setupShader(gl, vShaderCode, fShaderCode) {
+        const program = gl.createProgram();
+
+        // 创建一个 WebGLShader 着色器对象
+        const vShader = gl.createShader(gl.VERTEX_SHADER);
+        // 挂接 GLSL 源代码到 shader 上
+        gl.shaderSource(vShader, vShaderCode);
+        // 编译一个 GLSL 着色器，使其成为为二进制数据，然后就可以被 WebGLProgram 对象所使用
+        gl.compileShader(vShader);
+        // 把着色器 shader 添加到 program
+        gl.attachShader(program, vShader);
+
+        const fShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fShader, fShaderCode);
+        gl.compileShader(fShader);
+        gl.attachShader(program, fShader);
+
+        // 分别链接和使用 WebGLProgram 对象
+        gl.linkProgram(program);
+        gl.useProgram(program);
+
+        // 方便外界获取 program
+        gl.program = program;
+    }
+
+    // function getMatrix_rotate (x, y, z) {
+    //     x = -Math.PI * (x) / 180;
+    //     y = -Math.PI * (y) / 180;
+    //     z = -Math.PI * (z) / 180;
+    //
+    //     const matrixZ = new Float32Array([
+    //         cosB, sinB, 0.0, 0.0,
+    //         -sinB, cosB, 0.0, 0.0,
+    //         0.0, 0.0, 1.0, 0.0,
+    //         0.0, 0.0, 0.0, 1.0,
+    //     ]);
+    //
+    //     Matrix<double> rotateY = DenseMatrix.OfArray (new double[,] {
+    //     { Math.Cos (y), 0, Math.Sin (y) },
+    //     { 0, 1, 0 },
+    //     { -Math.Sin (y), 0, Math.Cos (y) }
+    // });
+    //
+    //     Matrix<double> rotateX = DenseMatrix.OfArray (new double[,] {
+    //     { 1, 0, 0 },
+    //     { 0, Math.Cos (x), -Math.Sin (x) },
+    //     { 0, Math.Sin (x), Math.Cos (x) }
+    // });
+    //
+    //     const rotatey = new Float32Array([
+    //         Math.cos (z), -Math.sin (z), 0 ,
+    //         Math.sin (z),  Math.cos (z), 0 ,
+    //         0,          0,            1,
+    //         0,         0,             1
+    //     ]);
+    //
+    //    const rotateZ = new Float32Array([
+    //     Math.cos (z), -Math.sin (z), 0 ,
+    //     Math.sin (z),  Math.cos (z), 0 ,
+    //        0,          0,            1,
+    //        0,         0,             1
+    //    ]);
+    //
+    //     return rotateY * rotateX * rotateZ;
+    // }
+</script>
+</body>
+</html>

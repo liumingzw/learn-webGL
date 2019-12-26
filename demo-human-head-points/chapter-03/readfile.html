@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div style="background-color: #e0e0e0; width: 500px; height: 500px">
+    <canvas id="canvas" width="400" height="400">
+
+    </canvas>
+</div>
+
+<script type='x-shader/x-vertex' id='vertexshader'>
+    uniform mat4 u_xformMatrix;
+    attribute vec4 a_Position;
+    void main() {
+      gl_Position = u_xformMatrix * a_Position;
+    }
+</script>
+
+<script type='x-shader/x-fragment' id='fragmentshader'>
+    void main() {
+     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+</script>
+
+<script>
+    window.onload = draw3D();
+
+    // 见 P79，有详细的图
+    function draw3D() {
+        fetch('./3d_head_short.json')
+            .then(function(response) {
+                console.log("22222: ")
+                return response.json();
+            })
+            .then(function(myJson) {
+                console.log("3333")
+                console.log(myJson);
+            });
+    }
+
+
+
+</script>
+</body>
+</html>
